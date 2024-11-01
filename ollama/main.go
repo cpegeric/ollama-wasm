@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/extism/go-pdk"
@@ -68,9 +71,25 @@ func embed() int32 {
 	req.SetBody(payload)
 	// send the request, get response back (can check status on response via res.Status())
 	res := req.Send()
+	if res.Status() != 200 {
+		pdk.SetError(errors.New(fmt.Sprintf("HTTP NOT OK (%d)", res.Status())))
+		return 1
+	}
 
-	// zero-copy output to host
-	pdk.OutputMemory(res.Memory())
+	var e EmbeddingResponse
+	err = json.Unmarshal(res.Body(), &e)
+	if err != nil {
+		pdk.SetError(err)
+		return 2
+	}
+
+	bytes, err := json.Marshal(e.Embeddings)
+	if err != nil {
+		pdk.SetError(err)
+		return 3
+	}
+
+	pdk.Output(bytes)
 
 	return 0
 }
@@ -92,9 +111,26 @@ func generate() int32 {
 	req.SetBody(payload)
 	// send the request, get response back (can check status on response via res.Status())
 	res := req.Send()
+	if res.Status() != 200 {
+		pdk.SetError(errors.New(fmt.Sprintf("HTTP NOT OK (%d)", res.Status())))
+		return 1
+	}
 
-	// zero-copy output to host
-	pdk.OutputMemory(res.Memory())
+	var g GenerateResponse
+	err = json.Unmarshal(res.Body(), &g)
+	if err != nil {
+		pdk.SetError(err)
+		return 2
+	}
+
+	output := []string{g.Response}
+	bytes, err := json.Marshal(output)
+	if err != nil {
+		pdk.SetError(err)
+		return 3
+	}
+
+	pdk.Output(bytes)
 
 	return 0
 
