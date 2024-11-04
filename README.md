@@ -43,6 +43,7 @@ prompt in string format
 
 Output:
 JSON Array of generated text
+```
 
 
 ## Integration with MatrixOne Database
