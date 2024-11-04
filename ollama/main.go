@@ -91,6 +91,11 @@ func chunk() int32 {
 		}
 	}
 
+	if chunk_overlap >= chunk_size {
+		pdk.SetError(errors.New("chunk_size must be larger than chunk_overlap"))
+		return 2
+	}
+
 	data := pdk.Input()
 	iter := ChunkIterator{chunk_size, chunk_overlap, data}
 
@@ -155,6 +160,10 @@ func embed() int32 {
 			pdk.SetError(err)
 			return 3
 		}
+	}
+	if chunk_overlap >= chunk_size {
+		pdk.SetError(errors.New("chunk_size must be larger than chunk_overlap"))
+		return 2
 	}
 
 	model, ok := pdk.GetConfig("model")
