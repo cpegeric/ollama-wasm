@@ -42,9 +42,14 @@ func main() {
 
 	manifest := extism.Manifest{
 		Wasm: []extism.Wasm{
-			extism.WasmFile{
-				Path: "ollama.wasm",
+			extism.WasmUrl{
+				Url: "https://github.com/cpegeric/ollama-wasm/raw/main/ollama/ollama.wasm",
 			},
+			/*
+				extism.WasmFile{
+					Path: "ollama.wasm",
+				},
+			*/
 		},
 		AllowedHosts: []string{"localhost"},
 		Config:       cfg,
