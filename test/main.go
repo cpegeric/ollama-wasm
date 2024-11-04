@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -37,6 +36,10 @@ type GenerateResponse struct {
 func main() {
 
 	cfg := make(map[string]string)
+	cfg["chunk_size"] = "10"
+	cfg["chunk_overlap"] = "2"
+	cfg["model"] = "llama3.2"
+
 	manifest := extism.Manifest{
 		Wasm: []extism.Wasm{
 			extism.WasmFile{
@@ -57,17 +60,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	payload := EmbeddingRequest{
-		Model: "llama3.2",
-		Input: []string{"how are you?"},
-	}
-	reqbody, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
-
-	exit, out, err := plugin.Call("embed", reqbody)
+	question := []byte("how are you?  I am fine! thank you")
+	exit, out, err := plugin.Call("chunk", question)
 	if err != nil {
 		fmt.Printf("plugin call %v\n", err)
 		os.Exit(int(exit))
@@ -75,27 +69,26 @@ func main() {
 
 	fmt.Println(string(out))
 
-	greq := GenerateRequest{
-		Model: "llama3.2",
-		Prompt: `Question: Who is the queen of england. Please summarize the answer below with the question.
+	exit, out, err = plugin.Call("embed", question)
+	if err != nil {
+		fmt.Printf("plugin call %v\n", err)
+		os.Exit(int(exit))
+	}
+
+	fmt.Println(string(out))
+
+	prompt := []byte(`Question: Who is the queen of england. Please summarize the answer below with the question.
                 Here is the answer
                 1. Charles is the king now
                 2. Elizaberth is the queen last year
                 3. Bloody mary is the greatest queen
-                4. Edward is the strongest king ever`,
-		Stream: false,
-	}
+                4. Edward is the strongest king ever`)
 
-	reqbody, err = json.Marshal(greq)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	exit, out, err = plugin.Call("generate", reqbody)
+	exit, out, err = plugin.Call("generate", prompt)
 	if err != nil {
 		fmt.Printf("plugin call %v\n", err)
 		os.Exit(int(exit))
 	}
 	fmt.Println(string(out))
+
 }
