@@ -23,6 +23,11 @@ type EmbeddingResponse struct {
 	PromptEvalCount int         `json:"prompt_eval_count"`
 }
 
+type EmbeddingResult struct {
+	Chunk     string    `json:"chunk"`
+	Embedding []float32 `json:"embedding"`
+}
+
 type GenerateRequest struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
@@ -181,17 +186,27 @@ func embed() int32 {
 	res := req.Send()
 	if res.Status() != 200 {
 		pdk.SetError(errors.New(fmt.Sprintf("HTTP NOT OK (%d)", res.Status())))
-		return 1
+		return 6
 	}
 
 	var e EmbeddingResponse
 	err = json.Unmarshal(res.Body(), &e)
 	if err != nil {
 		pdk.SetError(err)
-		return 2
+		return 7
 	}
 
-	bytes, err := json.Marshal(e.Embeddings)
+	if len(input) != len(e.Embeddings) {
+		pdk.SetError(errors.New("embed: generated embedding size not match (#input != #embedding)"))
+		return 8
+	}
+
+	result := make([]EmbeddingResult, len(input))
+	for i, chunk_text := range input {
+		result[i] = EmbeddingResult{chunk_text, e.Embeddings[i]}
+	}
+
+	bytes, err := json.Marshal(result)
 	if err != nil {
 		pdk.SetError(err)
 		return 3
