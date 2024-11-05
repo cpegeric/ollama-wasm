@@ -24,6 +24,7 @@ type EmbeddingResponse struct {
 }
 
 type EmbeddingResult struct {
+	Id        int64     `json:"id"`
 	Chunk     string    `json:"chunk"`
 	Embedding []float32 `json:"embedding"`
 }
@@ -212,7 +213,7 @@ func embed() int32 {
 
 	result := make([]EmbeddingResult, len(input))
 	for i, chunk_text := range input {
-		result[i] = EmbeddingResult{chunk_text, e.Embeddings[i]}
+		result[i] = EmbeddingResult{int64(i), chunk_text, e.Embeddings[i]}
 	}
 
 	bytes, err := json.Marshal(result)
