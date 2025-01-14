@@ -59,7 +59,37 @@ func (c ChunkIterator) Chunks(yield func([]byte) bool) {
 			next_offset = offset + csize
 		} else {
 			csize = c.chunk_size
-			next_offset = offset + csize - c.chunk_overlap
+
+			if c.data[offset+csize-1] <= 127 {
+				// ascii
+				next_offset = offset + csize - c.chunk_overlap
+
+			} else {
+
+				// find leading byte
+				nskip := 1
+				for i := 0; i < 4; i++ {
+					// leading byte must have value at least 192 (binary 11000000)
+					if c.data[offset+csize-i-1] >= 192 {
+						// leading byte
+						break
+					}
+					nskip++
+				}
+				csize -= nskip
+				next_offset = offset + csize - c.chunk_overlap
+			}
+
+			// find next offset
+			nappend := 0
+			for i := 0; i < 4 && i < c.chunk_overlap; i++ {
+				if c.data[next_offset+i] <= 127 || c.data[next_offset+i] >= 192 {
+					break
+				}
+				nappend++
+			}
+			next_offset += nappend
+
 		}
 
 		if !yield(c.data[offset : offset+csize]) {
